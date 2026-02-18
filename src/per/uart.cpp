@@ -523,6 +523,7 @@ UartHandler::Impl::DmaListenStart(uint8_t* buff,
 
     /** cache maintanence to allow memory from cache-able regions  */
     dsy_dma_invalidate_cache_for_buffer(buff, size);
+    __HAL_UART_CLEAR_FLAG(&huart_, UART_CLEAR_PEF | UART_CLEAR_FEF | UART_CLEAR_NEF | UART_CLEAR_OREF);
     if(HAL_UART_Receive_DMA(&huart_, buff, size) != HAL_OK)
         return UartHandler::Result::ERR;
     dma_active_peripheral_ = int(config_.periph);
@@ -1103,8 +1104,19 @@ extern "C" void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef* huart)
 
 extern "C" void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart)
 {
-    auto* handle           = MapInstanceToHandle(huart->Instance);
-    handle->listener_mode_ = false;
+    auto* handle = MapInstanceToHandle(huart->Instance);
+    if(handle && handle->listener_mode_)
+    {
+        handle->listener_mode_ = false;
+        if(handle->circular_rx_callback_)
+        {
+            handle->circular_rx_callback_(
+                nullptr, 0,
+                handle->circular_rx_context_,
+                UartHandler::Result::ERR);
+        }
+        return;
+    }
     UartHandler::Impl::DmaTransferFinished(huart, UartHandler::Result::ERR);
 }
 
