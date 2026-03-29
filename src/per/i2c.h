@@ -220,6 +220,12 @@ class I2CHandle
 
     class Impl; /**< & */
 
+    /** Returns the internal HAL I2C handle. Required for project-level
+     *  HAL_I2C_Slave_Receive_IT calls (libDaisy does not expose IT slave mode).
+     *  Returns nullptr if the handle has not been initialized.
+     */
+    I2C_HandleTypeDef* GetHalHandle();
+
   private:
     Impl* pimpl_;
 };

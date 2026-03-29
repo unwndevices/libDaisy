@@ -782,7 +782,7 @@ extern "C" void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef* i2c_handle)
     I2CHandle::Impl::DmaTransferFinished(i2c_handle, I2CHandle::Result::OK);
 }
 
-extern "C" void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef* i2c_handle)
+extern "C" __attribute__((weak)) void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef* i2c_handle)
 {
     I2CHandle::Impl::DmaTransferFinished(i2c_handle, I2CHandle::Result::OK);
 }
@@ -806,6 +806,12 @@ I2CHandle::Result I2CHandle::Init(const I2CHandle::Config& config)
 const I2CHandle::Config& I2CHandle::GetConfig() const
 {
     return pimpl_->GetConfig();
+}
+
+I2C_HandleTypeDef* I2CHandle::GetHalHandle()
+{
+    if(pimpl_ == nullptr) return nullptr;
+    return &pimpl_->i2c_hal_handle_;
 }
 
 I2CHandle::Result I2CHandle::TransmitBlocking(uint16_t address,
